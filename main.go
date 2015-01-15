@@ -10,7 +10,8 @@ import (
 func main() {
 	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
 		url := *req.URL
-		url.Host = strings.Replace(url.Host, "appsdeck.eu", "scalingo.com", 1)
+		url.Scheme = "http"
+		url.Host = strings.Replace(req.Header.Get("Host"), "appsdeck.eu", "scalingo.com", 1)
 		http.Redirect(res, req, url.String(), 301)
 	})
 
