@@ -11,7 +11,7 @@ func main() {
 	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
 		url := *req.URL
 		url.Scheme = "http"
-		url.Host = strings.Replace(req.Header.Get("Host"), "appsdeck.eu", "scalingo.com", 1)
+		url.Host = strings.Replace(req.Host, "appsdeck.eu", "scalingo.com", 1)
 		http.Redirect(res, req, url.String(), 301)
 	})
 
