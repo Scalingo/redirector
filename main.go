@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -13,5 +14,6 @@ func main() {
 		http.Redirect(res, req, url.String(), 301)
 	})
 
-	http.ListenAndServe(""+os.Getenv("PORT"), nil)
+	log.Println("listenening on", os.Getenv("PORT"))
+	log.Fatalln(http.ListenAndServe(":"+os.Getenv("PORT"), nil))
 }
