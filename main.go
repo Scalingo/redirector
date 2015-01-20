@@ -12,7 +12,7 @@ func main() {
 	http.HandleFunc("/", func(res http.ResponseWriter, req *http.Request) {
 		url := *req.URL
 		url.Scheme = "http"
-		if req.Host == "appsdeck.eu" {
+		if req.Host == "appsdeck.eu" || req.Host == "staging.appsdeck.eu" {
 			redirectAppsdeck(res, req)
 			return
 		}
@@ -55,7 +55,11 @@ func redirectAppsdeck(res http.ResponseWriter, req *http.Request) {
 			u.Path = pParsed.Path
 			break
 		} else if strings.HasPrefix(pathFragment, "/apps") {
-			u.Host = "my.scalingo.com"
+			if req.Host == "staging.appsdeck.eu" {
+				u.Host = "scalingo-dashboard.staging.scalingo.io"
+			} else {
+				u.Host = "my.scalingo.com"
+			}
 			pathFragment = strings.Replace(pathFragment, f, p, 1)
 			u.Path = pathFragment
 		}
