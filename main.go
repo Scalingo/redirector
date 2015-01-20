@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -33,35 +34,61 @@ var appsdeckRedirections = map[string]string{
 	"#collaborators-tab": "/collaborators",
 	"#deployments-tab":   "/timeline",
 	"#management-tab":    "/settings",
-	"/pricing":           "https://scalingo.com/pricing",
+	"/pricing":           "/pricing",
 	"/roadmap":           "http://changelog.scalingo.com",
-	"/contact":           "https://scalingo.com/contact",
+	"/contact":           "/contact",
+	"":                   "",
 }
 
 func redirectAppsdeck(res http.ResponseWriter, req *http.Request) {
-	path := strings.TrimSpace(strings.TrimPrefix(req.URL.Path, "/home"))
-	pathFragment := path
-	if len(req.URL.Fragment) > 0 {
-		pathFragment += "#" + req.URL.Fragment
+	path := strings.TrimSpace(req.URL.Path)
+	u := &url.URL{Scheme: "https"}
+
+	if strings.Contains(path, "/home") {
+		switch req.Host {
+		case "appsdeck.eu":
+			u.Host = "my.scalingo.com"
+		case "staging.appsdeck.eu":
+			u.Host = "scalingo-dashboard.staging.scalingo.io"
+		}
+	} else {
+		switch req.Host {
+		case "appsdeck.eu":
+			u.Host = "scalingo.com"
+		case "staging.appsdeck.eu":
+			u.Host = "staging.scalingo.com"
+		}
 	}
 
-	u := &url.URL{}
-	u.Scheme = "https"
-	for f, p := range appsdeckRedirections {
-		if req.URL.Path == f && strings.HasPrefix(p, "http") {
-			pParsed, _ := url.Parse(p)
-			u.Scheme = pParsed.Scheme
-			u.Host = pParsed.Host
-			u.Path = pParsed.Path
-			break
-		} else if strings.HasPrefix(pathFragment, "/apps") {
-			if req.Host == "staging.appsdeck.eu" {
-				u.Host = "scalingo-dashboard.staging.scalingo.io"
-			} else {
-				u.Host = "my.scalingo.com"
+	if strings.HasPrefix(path, "/home") {
+		path = strings.TrimPrefix(path, "/home")
+		fragment := "#" + req.URL.Fragment
+		for src, dst := range appsdeckRedirections {
+			if src == fragment {
+				u.Path = path + dst
+				break
 			}
-			pathFragment = strings.Replace(pathFragment, f, p, 1)
-			u.Path = pathFragment
+		}
+		if u.Path == "" {
+			u.Path = path
+		}
+	} else {
+		for src, dst := range appsdeckRedirections {
+			if path == src {
+				dstURL, err := url.Parse(dst)
+				if err != nil {
+					fmt.Println(err)
+				} else {
+					if len(dstURL.Host) != 0 {
+						u.Scheme = dstURL.Scheme
+						u.Host = dstURL.Host
+						u.Path = dstURL.Path
+					} else {
+						u.Path = dst
+					}
+				}
+				break
+			}
 		}
 	}
 
